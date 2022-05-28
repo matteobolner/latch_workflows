@@ -18,7 +18,6 @@ def circlator_all(
     nanopore_reads: bool = False
     ) -> LatchDir:
 
-
     local_dir = "/root/circlator_output/"
     remote_dir = f"latch:///{output_dir}/"
 
