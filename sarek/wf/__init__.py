@@ -8,7 +8,7 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Union
 
-from latch import large_task, small_task, workflow
+from latch import large_task, medium_task, small_task, workflow
 from latch.types import LatchDir, LatchFile
 
 #PARAMETERS:
@@ -34,15 +34,38 @@ from latch.types import LatchDir, LatchFile
 #--max_time, --custom_config_version, --custom_config_base, --hostnames, --config_profile_name, --config_profile_description,
 #--config_profile_contact, --config_profile_url
 
+#        genome:
+#          Reference genome to use.
+#            __metadata__:
+#            display_name: Reference genome to use.
+#        step:
+#          Step of the workflow to start from
+#          __metadata__:
+#            display_name: Step of the workflow to start from
+
+
+#class starting_steps(Enum):
+#    mapping = "mapping"
+#    prepare_recalibration = "prepare_recalibration"
+#    recalibrate = "recalibrate"
+#    variant_calling = "variant_calling"
+#    annotate = "annotate"
+#    ControlFREEC = "ControlFREEC"
+#    preparecalibration = "preparecalibration"
 
 
 
-@large_task
+#####PROBLEM WITH NOT WORKING MIGHT BE DUE TO SELECTING AN ALREADY EXISTING OUTPUT DIR
+
+@small_task
 def nf_sarek_task(
+#    starting_step: Union[starting_steps, None] = None,
+    input_tsv: LatchFile,
+#    data_folder: LatchDir,
     output_dir: str,
 ) -> LatchDir:
 
-    local_output="/root/sarek_output"
+    local_output="/root/test"
     remote_dir = f"latch:///{output_dir}/"
 
     nextflow_cmd = [
@@ -50,19 +73,43 @@ def nf_sarek_task(
         "run",
         "nf-core/sarek",
         "--input",
-        "root/test_data/data/tsv/tiny.tsv"
-        "--genome",
-        "GRCh38"
+        input_tsv.local_path,
         "--outdir",
         str(local_output)
     ]
     subprocess.run(nextflow_cmd)
+#    print("PORCOLADROPORCOLADRO")
+    return LatchDir(str(local_output), remote_dir)
 
+
+@small_task
+def test_task(
+    input_tsv: LatchFile,
+    output_dir: str,
+) -> LatchDir:
+
+    local_output="/root/test"
+    remote_dir = f"latch:///{output_dir}/"
+
+    nextflow_cmd = [
+        "nextflow",
+        "run",
+        "nf-core/sarek",
+        "-profile",
+        "conda",
+        "input_tsv",
+        str(input_tsv),
+        "--outdir",
+        str(local_output)
+    ]
+    subprocess.run(nextflow_cmd)
+#    print("PORCOLADROPORCOLADRO")
     return LatchDir(str(local_output), remote_dir)
 
 
 @workflow
 def nf_sarek_wf(
+    input_tsv: LatchFile,
     output_dir: str,
 ) -> LatchDir:
     """A latch workflow wrapping nf-core/rnaseq.
@@ -80,10 +127,19 @@ def nf_sarek_wf(
             id: MIT
 
     Args:
+        input_tsv:
+          Input tsv
+          __metadata__:
+            display_name: Input tsv
+
         output_dir:
           The location of your outputs.
-
           __metadata__:
             display_name: Output Directory
+
     """
-    return(nf_sarek_task(output_dir=output_dir))
+    return(nf_sarek_task(input_tsv=input_tsv, output_dir=output_dir))
+    #return(test_task(output_dir=output_dir))
+
+#if __name__ == "__main__":
+#    nf_sarek_wf(output_dir="/root/sarek_output/")

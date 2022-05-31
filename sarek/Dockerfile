@@ -34,7 +34,7 @@ ENV PATH="/root/mambaforge/envs/nf-core-sarek-2.7.1/bin/:${PATH}"
 
 RUN mkdir /root/sarek_output
 
-COPY data/test_data /root/test_data
+COPY data/test_data /root/data/test_data
 
 COPY wf /root/wf
 
