@@ -74,11 +74,18 @@ def nf_sarek_task(
         "nf-core/sarek",
         "--input",
         input_tsv.local_path,
+        "--igenomes_ignore=true",
+        "--genome=smallGRCh37",
+        "--genomes_base = 'https://raw.githubusercontent.com/nf-core/test-datasets/sarek/reference'",
+        #"snpeff_db='WBcel235.86'",
+        "--species=caenorhabditis_elegans",
+        "--schema_ignore_params='genomes'",
+        "--max_cpus=4",
+        "--max_memory=4.GB",
         "--outdir",
         str(local_output)
     ]
     subprocess.run(nextflow_cmd)
-#    print("PORCOLADROPORCOLADRO")
     return LatchDir(str(local_output), remote_dir)
 
 
@@ -103,7 +110,6 @@ def test_task(
         str(local_output)
     ]
     subprocess.run(nextflow_cmd)
-#    print("PORCOLADROPORCOLADRO")
     return LatchDir(str(local_output), remote_dir)
 
 

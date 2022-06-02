@@ -2,7 +2,7 @@ FROM 812206152185.dkr.ecr.us-west-2.amazonaws.com/wf-base:fbe8-main
 
 # We'll need a Java Runtime Environment to run nextflow.
 RUN apt-get update \
-    && apt-get install -y default-jre-headless
+    && apt-get install -y default-jre-headless wget
 # Here we download nextflow itself.
 RUN curl -s https://get.nextflow.io | bash \
     && mv nextflow /bin/
@@ -31,10 +31,10 @@ RUN /root/mambaforge/bin/mamba env create -f /root/environment.yml \
 
 ENV PATH="/root/mambaforge/envs/nf-core-sarek-2.7.1/bin/:${PATH}"
 
-
 RUN mkdir /root/sarek_output
+RUN wget http://igenomes.illumina.com.s3-website-us-east-1.amazonaws.com/Caenorhabditis_elegans/NCBI/WS195/Caenorhabditis_elegans_NCBI_WS195.tar.gz
 
-COPY data/test_data /root/data/test_data
+COPY data/ /root/data/
 
 COPY wf /root/wf
 
