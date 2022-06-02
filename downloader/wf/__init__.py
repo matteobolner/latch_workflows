@@ -22,17 +22,20 @@ def download_task(
     outname: Optional[str],
     outpath: Optional[LatchDir]
     ) -> LatchFile:
-
     r = requests.get(url, stream=True, allow_redirects=True)
     if r.status_code != 200:
-        r.raise_for_status()  # Will only raise for 4xx codes, so...
+        r.raise_for_status()
         raise RuntimeError(f"Request to {url} returned status code {r.status_code}")
     file_size = int(r.headers.get('Content-Length', 0))
+    block_size = 1024
 
     if outname:
         filename=outname
     else:
         filename = url.split('/')[-1]
+
+    tempname = url.split('/')[-1]
+    print(f"Started downloading {tempname} ...")
 
     path = pathlib.Path(f'/root/{filename}').expanduser().resolve()
 
@@ -45,7 +48,24 @@ def download_task(
         outfile=f"{outpath.remote_path}/{filename}"
     else:
         outfile=f"latch:///{filename}"
-    print(f"{filename} was successfully downloaded")
+    print(f"{tempname} was successfully downloaded, moving to latch filesystem ...")
+    return LatchFile(path, outfile)
+
+    #t = tqdm(total=file_size, unit='iB', unit_scale=True)
+    #with open(path, 'wb') as f:
+    #    for data in r.iter_content(block_size):
+    #        t.update(len(data))
+    #        f.write(data)
+    #t.close()
+
+    #if file_size != 0 and t.n != file_size:
+    #    print("Error! Something went wrong during download.")
+
+    #if outpath:
+    #    outfile=f"{outpath.remote_path}/{filename}"
+    #else:
+    #    outfile=f"latch:///{filename}"
+    #print(f"{tempname} was successfully downloaded, moving to latch filesystem ...")
     return LatchFile(path, outfile)
 
 
@@ -53,19 +73,19 @@ def download_task(
 @workflow
 def Downloader(
     url: str,
-    outname: str,
-    outpath: LatchDir,
+    outname: Optional[str],
+    outpath: Optional[LatchDir],
     )->LatchFile:
 
-    """ Simple file downloader for the Latch Console which doesn't require locally downloading files
+    """ Simple file downloader for the Latch Console which doesn't require locally downloading files. Code was built with inspiration from https://stackoverflow.com/a/63831344 and https://stackoverflow.com/a/37573701
 
     __metadata__:
         display_name: Downloader
         author:
             name: Matteo Bolner
             email: matteo.bolner2@unibo.it
-            github: https://github.com/matteobolner/latch_workflows/tree/master/downloader
-        repository: https://github.com/matteobolner/latch_workflows
+            github : https://github.com/matteobolner
+        repository: https://github.com/matteobolner/latch_workflows/tree/master/downloader
         license:
             id: GPLv3
 
