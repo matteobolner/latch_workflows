@@ -11,6 +11,7 @@ from typing import List, Union
 from latch import large_task, medium_task, small_task, workflow
 from latch.types import LatchDir, LatchFile
 
+
 #PARAMETERS:
 #IO: input, step, outdir
 #MAIN: tools, no_intervals, nucleotides_per_second, sentieon, skip_qc, target_bed
@@ -56,12 +57,13 @@ from latch.types import LatchDir, LatchFile
 
 
 #####PROBLEM WITH NOT WORKING MIGHT BE DUE TO SELECTING AN ALREADY EXISTING OUTPUT DIR
-
+#####CHANGE FORMAT OF GENOME TO BGZIP FOR SAMTOOLS
 @small_task
 def nf_sarek_task(
 #    starting_step: Union[starting_steps, None] = None,
-    input_tsv: LatchFile,
-#    data_folder: LatchDir,
+    input_file: LatchFile,
+    step: str,
+    genome_file: LatchFile,
     output_dir: str,
 ) -> LatchDir:
 
@@ -73,13 +75,20 @@ def nf_sarek_task(
         "run",
         "nf-core/sarek",
         "--input",
-        input_tsv.local_path,
+        input_file.local_path,
+        "--step=",
+        step,
         "--igenomes_ignore=true",
-        "--genome=smallGRCh37",
-        "--genomes_base = 'https://raw.githubusercontent.com/nf-core/test-datasets/sarek/reference'",
+        "--no_intervals=true",
+        "--genome=custom",
+        "--fasta",
+        genome_file.local_path,
+        #"schema_ignore_params='genomes'",
+        #"--genome=smallGRCh37",
+        #"--genomes_base = 'https://raw.githubusercontent.com/nf-core/test-datasets/sarek/reference'",
         #"snpeff_db='WBcel235.86'",
-        "--species=caenorhabditis_elegans",
-        "--schema_ignore_params='genomes'",
+        #"--species=caenorhabditis_elegans",
+        #"schema_ignore_params = 'genomes,input_paths,input'",
         "--max_cpus=4",
         "--max_memory=4.GB",
         "--outdir",
@@ -88,10 +97,23 @@ def nf_sarek_task(
     subprocess.run(nextflow_cmd)
     return LatchDir(str(local_output), remote_dir)
 
+_params = locals()
+_flags = {
+    "step": lambda x: ["--step", str(x)] if x is not None else [],
+    "tools": lambda x: ["--tools", str(x)] if x is not None else [],
+    "no_intervals": lambda x: ["--no_intervals"] if x is True else [],
+    "nucleotides_per_second": lambda x: ["--nucleotides_per_second", str(x)] if x is not None else [],
+    "skip_qc": lambda x: ["--skip_qc", str(x)] if x is not None else [],
+    "target_bed": lambda x: ["--target_bed", str(x)] if x is not None else [],
+    "trim_fastq": lambda x: ["--trim_fastq", str(x)] if x is True else [],
+    "clip_r1": lambda x: ["--clip_r1", str(x)] if x is not None else [],
+    "clip_r2": lambda x: n["--clip_r2", str(x)] if x is not None else [],
+
+
 
 @small_task
 def test_task(
-    input_tsv: LatchFile,
+    input_file: LatchFile,
     output_dir: str,
 ) -> LatchDir:
 
@@ -104,8 +126,8 @@ def test_task(
         "nf-core/sarek",
         "-profile",
         "conda",
-        "input_tsv",
-        str(input_tsv),
+        "input_file",
+        str(input_file),
         "--outdir",
         str(local_output)
     ]
@@ -115,7 +137,9 @@ def test_task(
 
 @workflow
 def nf_sarek_wf(
-    input_tsv: LatchFile,
+    input_file: LatchFile,
+    step: str,
+    genome_file: LatchFile,
     output_dir: str,
 ) -> LatchDir:
     """A latch workflow wrapping nf-core/rnaseq.
@@ -133,10 +157,20 @@ def nf_sarek_wf(
             id: MIT
 
     Args:
-        input_tsv:
+        input_file:
           Input tsv
           __metadata__:
             display_name: Input tsv
+
+        step:
+          Starting step of the pipeline
+          __metadata__:
+            display_name: Starting step of the pipeline
+
+        genome_file:
+          Genome file in fasta format
+          __metadata__:
+            display_name: Genome file in fasta format
 
         output_dir:
           The location of your outputs.
@@ -144,7 +178,7 @@ def nf_sarek_wf(
             display_name: Output Directory
 
     """
-    return(nf_sarek_task(input_tsv=input_tsv, output_dir=output_dir))
+    return(nf_sarek_task(input_file=input_file, step=step, genome_file=genome_file, output_dir=output_dir))
     #return(test_task(output_dir=output_dir))
 
 #if __name__ == "__main__":

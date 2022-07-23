@@ -2,6 +2,7 @@
 FROM 812206152185.dkr.ecr.us-west-2.amazonaws.com/wf-base:fbe8-main
 
 RUN apt-get update -y
+RUN mkdir multiple_files
 
 COPY wf /root/wf
 

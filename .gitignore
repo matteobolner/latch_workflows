@@ -1,3 +1,6 @@
-last
 test
-sarek/data/.nextflow/
+sarek
+sarek_s3
+unirep
+unirep_latch
+untar_file
